@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="entry.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="defines.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="globals.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="functions.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="imports.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{a044560f-f331-4144-be86-21f553a3f8cb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
