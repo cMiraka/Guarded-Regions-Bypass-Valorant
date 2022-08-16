@@ -33,6 +33,7 @@ namespace utils
 		return pointer + uworld_offset;
 	}
 
+//bluefire1337
 	inline static bool isguarded( uintptr_t pointer ) noexcept
 	{
 		static constexpr uintptr_t filter = 0xFFFFFFF000000000;
