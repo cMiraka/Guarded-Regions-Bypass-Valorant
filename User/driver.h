@@ -35,7 +35,7 @@ public:
 		NtUserGetPointerProprietaryId(reinterpret_cast<uintptr_t>(&out));
 	}
 
-	uintptr_t guarded_region()
+	auto guarded_region() -> uintptr_t
 	{
 		_requests out = { 0 };
 		out.request_key = DRIVER_GETPOOL;
