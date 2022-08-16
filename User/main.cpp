@@ -13,16 +13,16 @@ auto cachethread() -> void
 		auto ulevel = driver.read< uintptr_t >( uworld  + offsets::ulevel );
 		if ( utils::isguarded ( ulevel ) )
 		{
-			driver.readguarded< uintptr_t >( guardedregion, uworld + offsets::ulevel );
-			printf( "[readguarded result] ulevel: 0x%p\n", ulevel );
+			auto _ulevel = driver.readguarded< uintptr_t >( guardedregion, uworld + offsets::ulevel );
+			printf( "[readguarded result] ulevel: 0x%p\n", _ulevel );
 		}
 		else printf( "ulevel: 0x%p\n", ulevel );
 
 		auto gamestate = driver.read< uintptr_t >( uworld + offsets::gamestate );
 		if ( utils::isguarded( gamestate ) ) 
 		{
-			driver.readguarded< uintptr_t >( guardedregion, uworld + offsets::gamestate );
-			printf( "[readguarded result] ulevel: 0x%p\n", ulevel );
+			auto _gamestate = driver.readguarded< uintptr_t >( guardedregion, uworld + offsets::gamestate );
+			printf( "[readguarded result] gamestate: 0x%p\n", _gamestate );
 		}
 		else printf( "gamestate: 0x%p\n", gamestate );
 
