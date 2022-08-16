@@ -47,8 +47,8 @@ public:
 	T readguarded(uint64_t guardedregion, uintptr_t src, size_t size = sizeof(T))
 	{
 		T buffer;
-		readvm(_processid, src, (uintptr_t)&buffer, size);
-		uintptr_t val = guardedregion + (*(uintptr_t*)&buffer & 0xFFFFFF);
+		readvm( _processid, src, ( uintptr_t )&buffer, size );
+		uintptr_t val = guardedregion + ( *( uintptr_t* )&buffer & 0xFFFFFF );
 		return *(T*)&val;
 	}
 
