@@ -26,17 +26,40 @@ auto readvm( _requests* in ) -> bool
 	return true;
 }
 
+auto move_mouse( _requests* in ) -> bool
+{
+	MOUSE_INPUT_DATA input;
+
+	input.LastX = in->x;
+	input.LastY = in->y;
+	input.ButtonFlags = in->button_flags;
+
+	KIRQL irql;
+	KeRaiseIrql( DISPATCH_LEVEL, &irql );
+
+	ULONG ret;
+	utils::mouse.service_callback( utils::mouse.mouse_device, &input, ( PMOUSE_INPUT_DATA )&input + 1, &ret );
+
+	KeLowerIrql(irql);
+
+	return true;
+}
+
 auto requesthandler( _requests* pstruct ) -> bool
 {
+	if ( !utils::mouse.service_callback || !utils::mouse.mouse_device )
+		utils::setup_mouclasscallback( &utils::mouse );
+
 	switch ( pstruct->request_key ) {
 
 	case DRIVER_GETPOOL:
 		return pstruct->allocation = utils::find_guarded_region();
-		break;
 
 	case DRIVER_READVM:
 		return readvm( pstruct );
-		break;
+
+	case DRIVER_MOUSE:
+		return move_mouse( pstruct );
 	}
 
 	return true;
