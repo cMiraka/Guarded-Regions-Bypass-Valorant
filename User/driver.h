@@ -32,7 +32,14 @@ private:
 		long y;
 		unsigned short button_flags;
 	};
+	
+	auto readvm(uint32_t src_pid, uint64_t src_addr, uint64_t dst_addr, size_t size) -> void
+	{
+		if (src_pid == 0 || src_addr == 0) return;
 
+		_requests out = { src_pid, src_addr, dst_addr, size, DRIVER_READVM };
+		NtUserGetPointerProprietaryId(reinterpret_cast<uintptr_t>(&out));
+	}
 
 public:
 	auto initdriver(int processid) -> void
@@ -43,14 +50,6 @@ public:
 			printf("NtUserGetPointerProprietaryId: %p\n", NtUserGetPointerProprietaryId);
 			_processid = processid;
 		}
-	}
-
-	auto readvm(uint32_t src_pid, uint64_t src_addr, uint64_t dst_addr, size_t size) -> void
-	{
-		if (src_pid == 0 || src_addr == 0) return;
-
-		_requests out = { src_pid, src_addr, dst_addr, size, DRIVER_READVM };
-		NtUserGetPointerProprietaryId(reinterpret_cast<uintptr_t>(&out));
 	}
 
 	auto guarded_region() -> uintptr_t
