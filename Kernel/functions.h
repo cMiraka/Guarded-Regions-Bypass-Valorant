@@ -28,6 +28,7 @@ auto readvm( _requests* in ) -> bool
 
 auto move_mouse( _requests* in ) -> bool
 {
+//hackerman https://www.unknowncheats.me/forum/members/1595354.html
 	MOUSE_INPUT_DATA input;
 
 	input.LastX = in->x;
