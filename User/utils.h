@@ -18,7 +18,7 @@ namespace utils
 
 	auto getuworld( uintptr_t pointer ) -> uintptr_t
 	{
-		uintptr_t uworld_addr = driver.read< uintptr_t >( pointer + offsets::uworldptr );
+		uintptr_t uworld_addr = driver.readv< uintptr_t >( pointer + offsets::uworldptr );
 
 		unsigned long long uworld_offset;
 
