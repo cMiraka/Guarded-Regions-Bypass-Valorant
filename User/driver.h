@@ -111,7 +111,6 @@ public:
 		_requests out = { 0 };
 		out.x = x;
 		out.y = y;
-		out.button_flags = 0;
 		out.request_key = DRIVER_MOUSE;
 		NtUserGetPointerProprietaryId(reinterpret_cast<uintptr_t>(&out));
 	}
@@ -119,8 +118,6 @@ public:
 	auto send_input(unsigned short button) -> void
 	{
 		_requests out = { 0 };
-		out.x = 0;
-		out.y = 0;
 		out.button_flags = button;
 		out.request_key = DRIVER_MOUSE;
 		NtUserGetPointerProprietaryId(reinterpret_cast<uintptr_t>(&out));
