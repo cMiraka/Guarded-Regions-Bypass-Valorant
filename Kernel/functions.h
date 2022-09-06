@@ -9,19 +9,11 @@ auto readvm( _requests* in ) -> bool
 	if (status != STATUS_SUCCESS) return false;
 
 	size_t memsize = 0;
-	void* buffer = ExAllocatePoolWithTag( NonPagedPool, in->size, 'DieH' );
-	if ( !buffer )
-		return false;
 
-	if ( !NT_SUCCESS( utils::readprocessmemory( source_process, ( void* )in->src_addr, buffer, in->size, &memsize) ) )
-		return false;
-
-	if ( !NT_SUCCESS( utils::writeprocessmemory( PsGetCurrentProcess(), ( void* )in->dst_addr, buffer, in->size, &memsize ) ) )
+	if ( !NT_SUCCESS( utils::readprocessmemory( source_process, ( void* )in->src_addr, ( void* )in->dst_addr, in->size, &memsize) ) )
 		return false;
 
 	ObDereferenceObject( source_process );
-
-	ExFreePoolWithTag( buffer, 'DieH' );
 
 	return true;
 }
