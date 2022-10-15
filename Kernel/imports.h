@@ -7,7 +7,6 @@ extern "C" int _fltused = 0;
 #include <intrin.h>
 #include <ntimage.h>
 #include <windef.h>
-#include <intrin.h>
 #include <ntstrsafe.h>
 #include <ntdef.h>
 #include <stdint.h>
