@@ -270,4 +270,69 @@ namespace utils
         *written = curoffset;
         return STATUS_SUCCESS;
     }
+
+    //tt nbq#7049
+    auto setup_mouclasscallback( PMOUSE_OBJECT mouse_obj ) -> NTSTATUS
+    {
+        UNICODE_STRING mouclass;
+        RtlInitUnicodeString( &mouclass, L"\\Driver\\MouClass" );
+
+        PDRIVER_OBJECT mouclass_obj = NULL;
+        NTSTATUS status = ObReferenceObjectByName( &mouclass, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&mouclass_obj );
+
+        UNICODE_STRING mouhid;
+        RtlInitUnicodeString( &mouhid, L"\\Driver\\MouHID" );
+
+        PDRIVER_OBJECT mouhid_obj = NULL;
+        status = ObReferenceObjectByName( &mouhid, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&mouhid_obj );
+
+        PDEVICE_OBJECT mouhid_deviceobj = mouhid_obj->DeviceObject;
+
+        while ( mouhid_deviceobj && !mouse_obj->service_callback )
+        {
+            PDEVICE_OBJECT mouclass_deviceobj = mouclass_obj->DeviceObject;
+            while ( mouclass_deviceobj && !mouse_obj->service_callback )
+            {
+                if ( !mouclass_deviceobj->NextDevice && !mouse_obj->mouse_device )
+                {
+                    mouse_obj->mouse_device = mouclass_deviceobj;
+                }
+
+                PULONG_PTR deviceobj_extension = ( PULONG_PTR )mouhid_deviceobj->DeviceExtension;
+                ULONG_PTR deviceobj_ext_size = ( ( ULONG_PTR )mouhid_deviceobj->DeviceObjectExtension - ( ULONG_PTR )mouhid_deviceobj->DeviceExtension ) / 4;
+
+                for ( ULONG_PTR i = 0; i < deviceobj_ext_size; i++ )
+                {
+                    if (deviceobj_extension[i] == ( ULONG_PTR )mouclass_deviceobj && deviceobj_extension[i + 1] > ( ULONG_PTR )mouclass_obj )
+                    {
+                        mouse_obj->service_callback = ( MouseClassServiceCallback )(deviceobj_extension[i + 1] );
+                        break;
+                    }
+                }
+                mouclass_deviceobj = mouclass_deviceobj->NextDevice;
+            }
+            mouhid_deviceobj = mouhid_deviceobj->AttachedDevice;
+        }
+
+        if ( !mouse_obj->mouse_device )
+        {
+            PDEVICE_OBJECT target_device_object = mouclass_obj->DeviceObject;
+            while ( target_device_object )
+            {
+                if ( !target_device_object->NextDevice )
+                {
+                    mouse_obj->mouse_device = target_device_object;
+                    break;
+                }
+                target_device_object = target_device_object->NextDevice;
+            }
+        }
+
+        ObDereferenceObject( mouclass_obj );
+        ObDereferenceObject( mouhid_obj );
+
+        return status;
+    }
+
+    MOUSE_OBJECT mouse;
 }
