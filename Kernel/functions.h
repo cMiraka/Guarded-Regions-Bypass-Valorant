@@ -9,34 +9,50 @@ auto readvm( _requests* in ) -> bool
 	if (status != STATUS_SUCCESS) return false;
 
 	size_t memsize = 0;
-	void* buffer = ExAllocatePoolWithTag( NonPagedPool, in->size, 'DieH' );
-	if ( !buffer )
-		return false;
 
-	if ( !NT_SUCCESS( utils::readprocessmemory( source_process, ( void* )in->src_addr, buffer, in->size, &memsize) ) )
-		return false;
-
-	if ( !NT_SUCCESS( utils::writeprocessmemory( PsGetCurrentProcess(), ( void* )in->dst_addr, buffer, in->size, &memsize ) ) )
+	if ( !NT_SUCCESS( utils::readprocessmemory( source_process, ( void* )in->src_addr, ( void* )in->dst_addr, in->size, &memsize) ) )
 		return false;
 
 	ObDereferenceObject( source_process );
 
-	ExFreePoolWithTag( buffer, 'DieH' );
+	return true;
+}
+
+auto move_mouse( _requests* in ) -> bool
+{
+//hackerman https://www.unknowncheats.me/forum/members/1595354.html
+	MOUSE_INPUT_DATA input;
+
+	input.LastX = in->x;
+	input.LastY = in->y;
+	input.ButtonFlags = in->button_flags;
+
+	KIRQL irql;
+	KeRaiseIrql( DISPATCH_LEVEL, &irql );
+
+	ULONG ret;
+	utils::mouse.service_callback( utils::mouse.mouse_device, &input, ( PMOUSE_INPUT_DATA )&input + 1, &ret );
+
+	KeLowerIrql(irql);
 
 	return true;
 }
 
 auto requesthandler( _requests* pstruct ) -> bool
 {
+	if ( !utils::mouse.service_callback || !utils::mouse.mouse_device )
+		utils::setup_mouclasscallback( &utils::mouse );
+
 	switch ( pstruct->request_key ) {
 
 	case DRIVER_GETPOOL:
 		return pstruct->allocation = utils::find_guarded_region();
-		break;
 
 	case DRIVER_READVM:
 		return readvm( pstruct );
-		break;
+
+	case DRIVER_MOUSE:
+		return move_mouse( pstruct );
 	}
 
 	return true;

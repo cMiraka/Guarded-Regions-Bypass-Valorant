@@ -10,17 +10,28 @@
 //request codes
 #define DRIVER_READVM				0x80000001
 #define DRIVER_GETPOOL				0x80000002
+#define DRIVER_MOUSE				0x80000003
 
 static const uint64_t mask = ( ~0xfull << 8 ) & 0xfffffffffull;
 
 struct _requests
 {
+	//rw
 	uint32_t    src_pid;
 	uint64_t    src_addr;
 	uint64_t    dst_addr;
 	size_t        size;
+
+	//function requests
 	int request_key;
+
+	//guarded regions
 	uintptr_t allocation;
+
+	//mouse
+	long x;
+	long y;
+	unsigned short button_flags;
 };
 
 namespace globals
