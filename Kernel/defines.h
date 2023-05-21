@@ -3,6 +3,8 @@
 #define size_align(size) ((size + 0xFFF) & 0xFFFFFFFFFFFFF000)
 #define to_lower_c(ch) ((ch >= 'A' && ch <= 'Z') ? (ch + 32) : ch)
 
+#include <ntddmou.h>
+
 typedef struct _RTL_PROCESS_MODULE_INFORMATION
 {
 	HANDLE section;
@@ -327,12 +329,29 @@ typedef struct _SYSTEM_BIGPOOL_INFORMATION {
 	SYSTEM_BIGPOOL_ENTRY AllocatedInfo[ANYSIZE_ARRAY];
 } SYSTEM_BIGPOOL_INFORMATION, * PSYSTEM_BIGPOOL_INFORMATION;
 
+typedef VOID
+(*MouseClassServiceCallback)(
+	PDEVICE_OBJECT DeviceObject,
+	PMOUSE_INPUT_DATA InputDataStart,
+	PMOUSE_INPUT_DATA InputDataEnd,
+	PULONG InputDataConsumed
+	);
+
+typedef struct _MOUSE_OBJECT
+{
+	PDEVICE_OBJECT mouse_device;
+	MouseClassServiceCallback service_callback;
+} MOUSE_OBJECT, * PMOUSE_OBJECT;
+
 extern "C"
 {
-	NTSYSAPI NTSTATUS RtlCreateUserThread(HANDLE, PVOID, BOOLEAN, ULONG, SIZE_T, SIZE_T, PVOID, PVOID, PHANDLE, PCLIENT_ID);
+	POBJECT_TYPE* IoDriverObjectType;
+
+	NTSYSAPI NTSTATUS RtlCreateUserThread( HANDLE, PVOID, BOOLEAN, ULONG, SIZE_T, SIZE_T, PVOID, PVOID, PHANDLE, PCLIENT_ID );
 	__declspec( dllimport ) NTSTATUS ZwWaitForMultipleObjects( unsigned long, HANDLE[], WAIT_TYPE, BOOLEAN, LARGE_INTEGER * );
 	__declspec( dllimport ) PPEB PsGetProcessPeb( PEPROCESS );
 	__declspec( dllimport ) NTSTATUS __stdcall ZwQuerySystemInformation( SYSTEM_INFORMATION_CLASS, void *, unsigned long, unsigned long * );
 	NTSTATUS __stdcall MmCopyVirtualMemory( PEPROCESS, void *, PEPROCESS, void *, unsigned long long, KPROCESSOR_MODE, unsigned long long * );
 	__declspec( dllimport ) void *__stdcall RtlFindExportedRoutineByName( void *, PCCH );
+	NTSYSAPI NTSTATUS NTAPI ObReferenceObjectByName( _In_ PUNICODE_STRING ObjectName, _In_ ULONG Attributes, _In_opt_ PACCESS_STATE AccessState, _In_opt_ ACCESS_MASK DesiredAccess, _In_ POBJECT_TYPE ObjectType, _In_ KPROCESSOR_MODE AccessMode, _Inout_opt_ PVOID ParseContext, _Out_ PVOID * Object );
 }
