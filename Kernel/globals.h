@@ -9,7 +9,7 @@
 
 //request codes
 #define DRIVER_READVM				0x80000001
-#define DRIVER_GETPOOL				0x80000002
+#define DRIVER_PML4BASE				0x80000002
 #define DRIVER_MOUSE				0x80000003
 
 static const uint64_t mask = ( ~0xfull << 8 ) & 0xfffffffffull;

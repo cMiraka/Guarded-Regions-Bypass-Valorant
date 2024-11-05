@@ -45,13 +45,11 @@ auto requesthandler( _requests* pstruct ) -> bool
 
 	switch ( pstruct->request_key ) {
 
-	case DRIVER_GETPOOL:
+	case DRIVER_PML4BASE:
 		return pstruct->pml4_base = utils::find_pml4_base();
 
 	case DRIVER_READVM:
 		return readvm( pstruct );
-
-
 	}
 
 	return true;
