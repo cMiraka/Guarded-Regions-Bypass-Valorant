@@ -25,8 +25,8 @@ struct _requests
 	//function requests
 	int request_key;
 
-	//guarded regions
-	uintptr_t allocation;
+	//shadow regions
+	uintptr_t pml4_base;
 
 	//mouse
 	long x;

@@ -18,6 +18,7 @@ auto readvm( _requests* in ) -> bool
 	return true;
 }
 
+/*
 auto move_mouse( _requests* in ) -> bool
 {
 //hackerman https://www.unknowncheats.me/forum/members/1595354.html
@@ -37,22 +38,20 @@ auto move_mouse( _requests* in ) -> bool
 
 	return true;
 }
+*/
 
 auto requesthandler( _requests* pstruct ) -> bool
 {
-	if ( !utils::mouse.service_callback || !utils::mouse.mouse_device )
-		utils::setup_mouclasscallback( &utils::mouse );
 
 	switch ( pstruct->request_key ) {
 
 	case DRIVER_GETPOOL:
-		return pstruct->allocation = utils::find_guarded_region();
+		return pstruct->pml4_base = utils::find_pml4_base();
 
 	case DRIVER_READVM:
 		return readvm( pstruct );
 
-	case DRIVER_MOUSE:
-		return move_mouse( pstruct );
+
 	}
 
 	return true;

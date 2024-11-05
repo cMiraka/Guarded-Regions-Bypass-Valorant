@@ -2,12 +2,12 @@
 
 auto cachethread() -> void
 {
-	auto guardedregion = driver.guarded_region();
-	printf( "guardedregion: 0x%p\n", guardedregion );
+	auto pml4base = driver.pml4_base();
+	printf( "pml4base: 0x%p\n", pml4base);
 
 	while (true)
 	{
-		auto uworld = utils::getuworld( guardedregion );
+		auto uworld = driver.read< uintptr_t >( pml4base + offsets::uworld );
 		printf( "uworld: 0x%p\n", uworld );
 
 		auto ulevel = driver.read< uintptr_t >( uworld  + offsets::ulevel );

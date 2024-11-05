@@ -1,5 +1,7 @@
 namespace utils
 {
+    uintptr_t context_cr3 = 0;
+
     auto get_system_information( const SYSTEM_INFORMATION_CLASS information_class ) -> const void *
     {
         unsigned long size = 32;
@@ -60,47 +62,46 @@ namespace utils
         return 0;
     }
 
-    //from https://www.unknowncheats.me/forum/valorant/495965-bypass-guarded-region-externally.html
-    auto find_guarded_region() -> UINT_PTR
+    typedef struct ShadowRegionsDataStructure
     {
-        PSYSTEM_BIGPOOL_INFORMATION pool_information = 0;
+        uintptr_t OriginalPML4_t;
+        uintptr_t ClonedPML4_t;
+        uintptr_t GameCr3;
+        uintptr_t ClonedCr3;
+        uintptr_t FreeIndex;
+    } ShadowRegionsDataStructure;
 
-        ULONG information_length = 0;
-        NTSTATUS status = ZwQuerySystemInformation( system_bigpool_information, &information_length, 0, &information_length );
+    // simplified decryption for non-HVCI mode; HVCI version varies a little, use the decryption routine from vgk.sys for it
+    auto decrypt_cloned_cr3_simplified(uintptr_t cloned_cr3) -> uintptr_t
+    {
+        uintptr_t Last = cloned_cr3 & 0xFFFFFFFFF;
+        uintptr_t FirstDigit = Last >> 32 & 0xF;
+        uintptr_t LastDigit = Last & 0xF;
 
-        while (status == STATUS_INFO_LENGTH_MISMATCH)
-        {
-            if (pool_information)
-                ExFreePool(pool_information);
+        FirstDigit -= 1;
+        LastDigit -= 1;
 
-            pool_information = ( PSYSTEM_BIGPOOL_INFORMATION )ExAllocatePool( NonPagedPool, information_length );
-            status = ZwQuerySystemInformation( system_bigpool_information, pool_information, information_length, &information_length );
+        return FirstDigit << 32 | Last & 0x0FFFFFFF0 | LastDigit;
+    }
+
+    auto find_pml4_base() -> uintptr_t
+    {
+        auto vgk = utils::get_kernel_module("vgk.sys");
+        if (!vgk) {
+            dbg("vgk not found!");
+            return 0;
         }
-        UINT_PTR saved_virtual_address = 0;
 
-        if (pool_information)
-        {
-            for (ULONG i = 0; i < pool_information->Count; i++)
-            {
-                SYSTEM_BIGPOOL_ENTRY* allocation_entry = &pool_information->AllocatedInfo[i];
-
-                UINT_PTR virtual_address = (UINT_PTR)allocation_entry->VirtualAddress & ~1ull;
-
-                if ( allocation_entry->NonPaged && allocation_entry->SizeInBytes == 0x200000 )
-                {
-                    if ( saved_virtual_address == 0 && allocation_entry->TagUlong == 'TnoC' ) {
-                        saved_virtual_address = virtual_address;
-                    }
-
-                    //dbg("FindGuardedRegion => %llX og %p", virtual_address, allocation_entry->VirtualAddress);
-                    //dbg("TAG => %s", allocation_entry->Tag);
-                }
-            }
-
-            ExFreePool(pool_information);
+        auto ShadowRegionsData = *(ShadowRegionsDataStructure*)(vgk + 0x89488);
+        if (!ShadowRegionsData.GameCr3) {
+            dbg("ShadowRegionsData not found!");
+            return 0;
         }
-        //dbg("Return %llX", saved_virtual_address);
-        return saved_virtual_address;
+
+        // set read/write translation context to the decrypted cloned cr3
+        context_cr3 = decrypt_cloned_cr3_simplified(ShadowRegionsData.ClonedCr3);
+
+        return ShadowRegionsData.FreeIndex << 0x27;
     }
 
     //from https://www.unknowncheats.me/forum/anti-cheat-bypass/444289-read-process-physical-memory-attach.html
@@ -135,22 +136,6 @@ namespace utils
         default:
             return 0x0388;
         }
-    }
-
-    auto getprocessdirbase( PEPROCESS targetprocess ) -> ULONG_PTR
-    {
-        if (!targetprocess)
-            return 0;
-
-        PUCHAR process = ( PUCHAR )targetprocess;
-        ULONG_PTR process_dirbase = *( PULONG_PTR )( process + 0x28 );
-        if (process_dirbase == 0)
-        {
-            auto userdiroffset = getoffsets();
-            ULONG_PTR process_userdirbase = *( PULONG_PTR )( process + userdiroffset );
-            return process_userdirbase;
-        }
-        return process_dirbase;
     }
 
     auto readphysaddress( PVOID address, PVOID buffer, SIZE_T size, SIZE_T* read ) -> NTSTATUS
@@ -227,7 +212,7 @@ namespace utils
 
     auto readprocessmemory( PEPROCESS process, PVOID address, PVOID buffer, SIZE_T size, SIZE_T* read ) -> NTSTATUS
     {
-        auto process_dirbase = getprocessdirbase( process );
+        auto process_dirbase = context_cr3;
 
         SIZE_T curoffset = 0;
         while (size)
@@ -250,7 +235,7 @@ namespace utils
 
     auto writeprocessmemory( PEPROCESS process, PVOID address, PVOID buffer, SIZE_T size, SIZE_T* written ) -> NTSTATUS
     {
-        auto process_dirbase = getprocessdirbase( process );
+        auto process_dirbase = context_cr3;
 
         SIZE_T curoffset = 0;
         while (size)
@@ -334,5 +319,5 @@ namespace utils
         return status;
     }
 
-    MOUSE_OBJECT mouse;
+    //MOUSE_OBJECT mouse;
 }
